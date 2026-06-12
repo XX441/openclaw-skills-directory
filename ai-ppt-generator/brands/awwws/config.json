@@ -1,0 +1,19 @@
+{
+  "name": "Awwws",
+  "primary": "#1B5E20",
+  "accent": "#66BB6A",
+  "text_dark": "#212121",
+  "text_light": "#FFFFFF",
+  "bg_light": "#F1F8E9",
+  "bg_dark": "#1B5E20",
+  "font_cn": "Microsoft JhengHei",
+  "font_en": "Arial",
+  "footer_line1": "Confidential & Proprietary | © 2026 Awwws Technology. All Rights Reserved.",
+  "footer_line2": "保密及专有信息 | © 2026 遨世科技。保留所有权利。",
+  "dimensions": "1792x1024",
+  "aspect": "16:9",
+  "bullet_char": "●",
+  "checkmark": "✓",
+  "logo_position": "top-left",
+  "description": "Awwws fresh green + light green. Use for technology platform, QRFiD, Live Cert, developer-facing presentations."
+}

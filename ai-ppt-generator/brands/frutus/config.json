@@ -1,0 +1,19 @@
+{
+  "name": "Frutus",
+  "primary": "#4A148C",
+  "accent": "#CE93D8",
+  "text_dark": "#212121",
+  "text_light": "#FFFFFF",
+  "bg_light": "#F3E5F5",
+  "bg_dark": "#4A148C",
+  "font_cn": "Microsoft JhengHei",
+  "font_en": "Arial",
+  "footer_line1": "Confidential & Proprietary | © 2026 Frutus Charitable Foundation. All Rights Reserved.",
+  "footer_line2": "保密及专有信息 | © 2026 果燃共享慈善基金。保留所有权利。",
+  "dimensions": "1792x1024",
+  "aspect": "16:9",
+  "bullet_char": "◆",
+  "checkmark": "✓",
+  "logo_position": "top-left",
+  "description": "Frutus purple + lavender. Use for charity, foundation, CSR, and health verification presentations."
+}

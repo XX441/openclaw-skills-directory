@@ -1,0 +1,281 @@
+#!/usr/bin/env bash
+#
+# ssot-upload v1.1.0 — Good Steward SSOT pre-upload gate wrapper
+#
+# Blocks raw "gog drive upload" / "--replace" calls and enforces:
+#   1. Collision detection — refuses if target filename already exists in folder
+#   2. Version consistency — warns if filename version ≠ body version
+#   3. Auto-archive — moves old matching files to _Archive after successful upload
+#   4. Post-upload verification — confirms only 1 active version remains (v1.1)
+#
+# Usage:
+#   ssot-upload /path/to/file --parent <folder_id> [--name "Name_v1.0.ext"] [--replace <file_id>]
+#
+# All unknown flags are forwarded to the real gog command after the gates pass.
+
+set -euo pipefail
+
+# ── helpers ──────────────────────────────────────────────────────────────────
+
+die() { echo "[ssot-upload] ERROR: $*" >&2; exit 1; }
+warn() { echo "[ssot-upload] WARN: $*" >&2; }
+info() { echo "[ssot-upload] $*" >&2; }
+
+extract_ver() {
+  # extracts v{M}.{m}.{p} from a string, e.g. "Doc_v2.1.0.md" → "v2.1.0"
+  # Must succeed with empty output when no version exists; set -e would otherwise abort uploads.
+  echo "$1" | grep -oE 'v[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1 || true
+}
+
+# ── parse args ───────────────────────────────────────────────────────────────
+
+LOCAL_FILE=""
+PARENT_ID=""
+UPLOAD_NAME=""
+REPLACE_ID=""
+GOG_ARGS=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --parent)
+      PARENT_ID="$2"; shift 2 ;;
+    --name)
+      UPLOAD_NAME="$2"; shift 2 ;;
+    --replace)
+      REPLACE_ID="$2"; shift 2 ;;
+    *)
+      if [[ -z "$LOCAL_FILE" && ! "$1" =~ ^- ]]; then
+        LOCAL_FILE="$1"
+      else
+        GOG_ARGS+=("$1")
+      fi
+      shift ;;
+  esac
+done
+
+[[ -z "$LOCAL_FILE" ]] && die "No local file path provided."
+[[ ! -f "$LOCAL_FILE" ]]   && die "File not found: $LOCAL_FILE"
+[[ -z "$PARENT_ID" ]]      && die "--parent <folder_id> is required."
+
+# Determine the target name on Drive
+if [[ -n "$UPLOAD_NAME" ]]; then
+  TARGET_NAME="$UPLOAD_NAME"
+else
+  TARGET_NAME="$(basename "$LOCAL_FILE")"
+fi
+
+info "Target name: $TARGET_NAME"
+info "Parent folder: $PARENT_ID"
+
+# ── Gate 1: Collision detection ──────────────────────────────────────────────
+
+info "Checking for existing files in parent folder..."
+
+# Fetch ALL pages (pagination-safe)
+PAGE_TOKEN=""
+FIRST_PAGE=true
+COLLISION_FOUND=false
+EXISTING_NAME=""
+
+while true; do
+  if $FIRST_PAGE; then
+    LS_OUT="$(gog drive ls --parent "$PARENT_ID" 2>&1)" || true
+    FIRST_PAGE=false
+  else
+    LS_OUT="$(gog drive ls --parent "$PARENT_ID" --page "$PAGE_TOKEN" 2>&1)" || true
+  fi
+
+  # Check for exact name match
+  while IFS= read -r line; do
+    if echo "$line" | grep -qF "$TARGET_NAME"; then
+      EXISTING_NAME="$line"
+      COLLISION_FOUND=true
+      break 2
+    fi
+  done <<< "$LS_OUT"
+
+  PAGE_TOKEN="$(echo "$LS_OUT" | grep '^# Next page:' | sed 's/^# Next page: //' || true)"
+  [[ -z "$PAGE_TOKEN" ]] && break
+done
+
+if $COLLISION_FOUND; then
+  # Replacing the exact same Drive file is not a duplicate/collision; preserve link/permissions.
+  if [[ -n "$REPLACE_ID" ]] && echo "$EXISTING_NAME" | awk '{print $1}' | grep -qxF "$REPLACE_ID"; then
+    info "Existing target is the --replace file; proceeding with in-place replacement."
+  else
+    FILE_VER="$(extract_ver "$TARGET_NAME")"
+    die "$TARGET_NAME${FILE_VER:+ ($FILE_VER)} already exists in parent folder. Bump version before upload."
+  fi
+else
+  info "No collision. Proceeding."
+fi
+
+# ── Gate 2: Version consistency ──────────────────────────────────────────────
+
+FNAME_VER="$(extract_ver "$TARGET_NAME")"
+if [[ -n "$FNAME_VER" ]]; then
+  MIME_TYPE="$(file -b --mime-type "$LOCAL_FILE" 2>/dev/null || true)"
+  case "$MIME_TYPE" in
+    video/*|audio/*|image/*)
+      warn "Skipping body version scan for binary media file ($MIME_TYPE). Filename version will be treated as authoritative."
+      BODY_VERS=""
+      ;;
+    *)
+      # Use -a so binary containers (zip/pdf) with embedded README/metadata versions
+      # are scanned as text instead of producing "Binary file ... matches".
+      BODY_VERS="$(grep -aoiE 'v[0-9]+\.[0-9]+(\.[0-9]+)?' "$LOCAL_FILE" 2>/dev/null | sort -u || true)"
+      ;;
+  esac
+
+  if [[ -z "$BODY_VERS" && "$MIME_TYPE" != video/* && "$MIME_TYPE" != audio/* && "$MIME_TYPE" != image/* ]]; then
+    warn "Filename has version '$FNAME_VER' but NO version found in document body."
+    warn "Add a version line (e.g. 'Version: $FNAME_VER') to the document."
+  elif [[ -n "$BODY_VERS" ]]; then
+    MATCH=false
+    while IFS= read -r bv; do
+      [[ "$bv" == "$FNAME_VER" ]] && MATCH=true && break
+    done <<< "$BODY_VERS"
+
+    if ! $MATCH; then
+      BODY_LIST="$(echo "$BODY_VERS" | tr '\n' ' ')"
+      die "Version mismatch: filename=$FNAME_VER, body=$BODY_LIST. Update body versions before upload."
+    fi
+    info "Version check passed: $FNAME_VER (filename ≡ body)"
+  fi
+fi
+
+# ── Execute the real upload ──────────────────────────────────────────────────
+
+info "Uploading..."
+CMD=(gog drive upload "$LOCAL_FILE")
+# gog upload create uses --parent; replace preserves existing location/link and cannot combine with --parent.
+if [[ -z "$REPLACE_ID" ]]; then
+  CMD+=(--parent "$PARENT_ID")
+fi
+[[ -n "$UPLOAD_NAME" ]] && CMD+=(--name "$UPLOAD_NAME")
+[[ -n "$REPLACE_ID" ]]  && CMD+=(--replace "$REPLACE_ID")
+if [[ ${#GOG_ARGS[@]} -gt 0 ]]; then
+  CMD+=("${GOG_ARGS[@]}")
+fi
+
+"${CMD[@]}" || die "Upload command failed."
+
+info "Upload complete."
+
+# ── Gate 3: Auto-archive old matching files ──────────────────────────────────
+
+BASE_NAME="${TARGET_NAME%_v*}"  # Strip _vX.Y.Z and extension from target
+if [[ "$BASE_NAME" != "$TARGET_NAME" ]]; then
+  info "Scanning for older versions of '$BASE_NAME' to archive..."
+
+  # Re-fetch all pages
+  PAGE_TOKEN=""
+  FIRST_PAGE=true
+  TO_ARCHIVE=()
+
+  while true; do
+    if $FIRST_PAGE; then
+      LS_OUT="$(gog drive ls --parent "$PARENT_ID" 2>&1)" || true
+      FIRST_PAGE=false
+    else
+      LS_OUT="$(gog drive ls --parent "$PARENT_ID" --page "$PAGE_TOKEN" 2>&1)" || true
+    fi
+
+    while IFS= read -r line; do
+      # Match files starting with the same base name but NOT the current target
+      # gog drive ls output format: "id   name   size   type   created"
+      if echo "$line" | grep -qi "${BASE_NAME}_v" && ! echo "$line" | grep -qF "$TARGET_NAME"; then
+        OLD_ID="$(echo "$line" | awk '{print $1}')"
+        OLD_NAME="$(echo "$line" | awk '{for(i=2;i<=NF-3;i++) printf "%s%s", $i, (i<NF-3?" ":"")}')"
+        OLD_VER="$(extract_ver "$line")"
+        # Do not archive companion files for the same version (e.g. .md + .pdf).
+        # Only superseded versions should be archived automatically.
+        if [[ -n "$FNAME_VER" && "$OLD_VER" == "$FNAME_VER" ]]; then
+          continue
+        fi
+        if [[ -n "$OLD_ID" && "$OLD_ID" != "ID" ]]; then
+          TO_ARCHIVE+=("$OLD_ID")
+          info "  → will archive: $OLD_NAME ($OLD_ID)"
+        fi
+      fi
+    done <<< "$LS_OUT"
+
+    PAGE_TOKEN="$(echo "$LS_OUT" | grep '^# Next page:' | sed 's/^# Next page: //' || true)"
+    [[ -z "$PAGE_TOKEN" ]] && break
+  done
+
+  if [[ ${#TO_ARCHIVE[@]} -gt 0 ]]; then
+    # Check if _Archive folder exists; create if not
+    ARCHIVE_DIR="$(gog drive ls --parent "$PARENT_ID" 2>&1 | grep -i '_Archive' | head -1 | awk '{print $1}' || true)"
+    if [[ -z "$ARCHIVE_DIR" || "$ARCHIVE_DIR" == "ID" ]]; then
+      info "Creating _Archive folder..."
+      ARCHIVE_DIR="$(gog drive mkdir _Archive --parent "$PARENT_ID" 2>&1 | tail -1 | awk '{print $NF}')" || true
+    fi
+
+    if [[ -n "$ARCHIVE_DIR" && "$ARCHIVE_DIR" != "ID" ]]; then
+      for old_id in "${TO_ARCHIVE[@]}"; do
+        info "Archiving $old_id → _Archive/"
+        gog drive move "$old_id" --parent "$ARCHIVE_DIR" 2>/dev/null || warn "Failed to archive $old_id"
+      done
+      info "Archived ${#TO_ARCHIVE[@]} old version(s)."
+    else
+      warn "Cannot locate/create _Archive folder. Old files not archived."
+    fi
+  else
+    info "No old versions to archive."
+  fi
+fi
+
+info "Done."
+
+# ── Gate 4: Post-upload verification ──────────────────────────────────────
+
+if [[ -n "$BASE_NAME" && "$BASE_NAME" != "$TARGET_NAME" ]]; then
+  info "Verifying: only 1 active version of '$BASE_NAME'..."
+
+  PAGE_TOKEN=""
+  FIRST_PAGE=true
+  ACTIVE_COUNT=0
+  ACTIVE_VERSIONS=()
+
+  while true; do
+    if $FIRST_PAGE; then
+      LS_OUT="$(gog drive ls --parent "$PARENT_ID" 2>&1)" || true
+      FIRST_PAGE=false
+    else
+      LS_OUT="$(gog drive ls --parent "$PARENT_ID" --page "$PAGE_TOKEN" 2>&1)" || true
+    fi
+
+    while IFS= read -r line; do
+      if echo "$line" | grep -qi "${BASE_NAME}_v" && ! echo "$line" | grep -qi '_Archive'; then
+        LINE_VER="$(extract_ver "$line")"
+        # Companion files for the same version (e.g. .md + .pdf, .zip + folder
+        # metadata) are valid. Count distinct active versions, not files.
+        SEEN=false
+        if [[ ${#ACTIVE_VERSIONS[@]} -gt 0 ]]; then
+          for seen_ver in "${ACTIVE_VERSIONS[@]}"; do
+            [[ "$seen_ver" == "$LINE_VER" ]] && SEEN=true && break
+          done
+        fi
+        if ! $SEEN; then
+          ACTIVE_VERSIONS+=("$LINE_VER")
+          ACTIVE_COUNT=$((ACTIVE_COUNT + 1))
+          if [[ $ACTIVE_COUNT -gt 1 ]]; then
+            warn "DUPLICATE VERSION: $line"
+          fi
+        fi
+      fi
+    done <<< "$LS_OUT"
+
+    PAGE_TOKEN="$(echo "$LS_OUT" | grep '^# Next page:' | sed 's/^# Next page: //' || true)"
+    [[ -z "$PAGE_TOKEN" ]] && break
+  done
+
+  if [[ $ACTIVE_COUNT -eq 1 ]]; then
+    info "Verify: ✅ 1 active version"
+  elif [[ $ACTIVE_COUNT -gt 1 ]]; then
+    warn "Verify: 🔴 $ACTIVE_COUNT active versions! Manual cleanup needed."
+  else
+    warn "Verify: ⚠️ No active version found (may be in subfolder)"
+  fi
+fi

@@ -1,0 +1,19 @@
+{
+  "name": "BD",
+  "primary": "#1565C0",
+  "accent": "#FFB300",
+  "text_dark": "#212121",
+  "text_light": "#FFFFFF",
+  "bg_light": "#E3F2FD",
+  "bg_dark": "#1565C0",
+  "font_cn": "Microsoft JhengHei",
+  "font_en": "Arial",
+  "footer_line1": "Confidential | Business Development",
+  "footer_line2": "",
+  "dimensions": "1792x1024",
+  "aspect": "16:9",
+  "bullet_char": "●",
+  "checkmark": "✓",
+  "logo_position": "top-left",
+  "description": "BD blue + gold. Generic business development presentations, proposals, and partner decks."
+}

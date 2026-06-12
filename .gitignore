@@ -1,0 +1,28 @@
+# macOS
+.DS_Store
+
+# Dependencies
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Local config / secrets
+.env
+.env.*
+!.env.example
+*.local
+*secret*
+*token*
+credentials/
+
+# Build / cache
+.cache/
+dist/
+build/
+coverage/
+
+# OpenClaw / ClawHub local metadata
+.clawhub/
+_meta.json

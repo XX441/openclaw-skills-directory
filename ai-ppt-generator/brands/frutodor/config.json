@@ -1,0 +1,19 @@
+{
+  "name": "Frutodor",
+  "primary": "#C62828",
+  "accent": "#FF8F00",
+  "text_dark": "#333333",
+  "text_light": "#FFFFFF",
+  "bg_light": "#FFF8E1",
+  "bg_dark": "#C62828",
+  "font_cn": "Microsoft JhengHei",
+  "font_en": "Arial",
+  "footer_line1": "Confidential & Proprietary | © 2026 Frutodor. All Rights Reserved.",
+  "footer_line2": "保密及专有信息 | © 2026 果临门。保留所有权利。",
+  "dimensions": "1792x1024",
+  "aspect": "16:9",
+  "bullet_char": "◆",
+  "checkmark": "✓",
+  "logo_position": "top-left",
+  "description": "Frutodor red + amber. Use for trade brokerage, retail consignment, commercial sales presentations."
+}

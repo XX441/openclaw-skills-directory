@@ -1,0 +1,284 @@
+#!/usr/bin/env python3
+"""ssot-audit v1.1.0 — Folder compliance scanner for Good Steward Legacy SSOT.
+
+Usage:
+  ssot-audit <drive_folder_id>   # Scan a Google Drive folder
+  ssot-audit <local_directory>   # Scan a local filesystem folder
+
+Checks:
+  - Naming issues: spaces, hyphens, vague terms such as Final/New/Updated
+  - Missing filename version numbers for active files
+  - Multiple active versions of the same base document
+  - Filename/body version mismatch for markdown/text-like files
+  - TBC / 待确认 / 待確認 placeholders
+  - Google Drive pagination is exhausted before reporting results
+"""
+
+from __future__ import annotations
+
+import os
+import re
+import subprocess
+import sys
+import tempfile
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Iterable
+
+SCRIPT_VERSION = "v1.1.0"
+VERSION_RE = re.compile(r"_v(\d+(?:\.\d+){0,2})(?=\.)", re.I)
+BODY_VERSION_RE = re.compile(r"\b(?:version|document version|版本)\s*[:：]?\s*v?(\d+(?:\.\d+){0,2})\b", re.I)
+VAGUE_RE = re.compile(r"\b(final|new|updated|最新版|最终|最後|最新)\b", re.I)
+PLACEHOLDER_RE = re.compile(r"\bTBC\b|待确认|待確認", re.I)
+TEXT_EXTS = {".md", ".txt", ".html", ".htm", ".csv"}
+VERSIONLESS_ALLOWED = {
+    "README.md",
+    "PROJECT_INDEX.md",
+    "00_PROJECT_STATUS.md",
+}
+
+
+@dataclass
+class Item:
+    id: str
+    name: str
+    type: str
+    size: str = ""
+    modified: str = ""
+    owner: str = ""
+    local_path: Path | None = None
+
+
+def usage() -> None:
+    print(f"ssot-audit {SCRIPT_VERSION} — SSOT compliance scanner")
+    print("")
+    print("Usage:")
+    print("  ssot-audit <drive_folder_id>   # Scan a Google Drive folder")
+    print("  ssot-audit <local_directory>   # Scan a local filesystem folder")
+    print("")
+    print("Examples:")
+    print("  ssot-audit 1Mv2628d95baUDqkTG72JYIWjoAp02_zA")
+    print("  ssot-audit /path/to/folder")
+
+
+def run(cmd: list[str], check: bool = False) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(cmd, text=True, capture_output=True, check=check)
+
+
+def is_drive_id(target: str) -> bool:
+    return bool(re.fullmatch(r"[A-Za-z0-9_-]{25,}", target)) and not Path(target).is_dir()
+
+
+def parse_next_page(output: str) -> str | None:
+    for line in output.splitlines():
+        if line.startswith("# Next page:"):
+            token = line.split(":", 1)[1].strip()
+            if token.startswith("--page "):
+                token = token[len("--page ") :].strip()
+            return token or None
+    return None
+
+
+def list_drive(folder_id: str) -> list[Item]:
+    items: list[Item] = []
+    page: str | None = None
+    seen_pages: set[str] = set()
+
+    while True:
+        cmd = ["gog", "drive", "ls", "--parent", folder_id, "--max", "50", "--plain"]
+        if page:
+            if page in seen_pages:
+                raise RuntimeError("Drive pagination loop detected")
+            seen_pages.add(page)
+            cmd.extend(["--page", page])
+
+        proc = run(cmd)
+        if proc.returncode != 0:
+            raise RuntimeError(proc.stderr.strip() or "gog drive ls failed")
+
+        for line in proc.stdout.splitlines():
+            if not line or line.startswith("#") or line.startswith("ID\t"):
+                continue
+            parts = line.split("\t")
+            if len(parts) >= 3:
+                parts += [""] * (6 - len(parts))
+                items.append(Item(*parts[:6]))
+
+        page = parse_next_page(proc.stdout)
+        if not page:
+            break
+    return items
+
+
+def list_local(path: Path) -> list[Item]:
+    if not path.is_dir():
+        raise RuntimeError(f"Not a directory: {path}")
+    items = []
+    for child in sorted(path.iterdir(), key=lambda p: p.name.lower()):
+        typ = "folder" if child.is_dir() else "file"
+        size = "-" if child.is_dir() else str(child.stat().st_size)
+        items.append(Item(id=str(child), name=child.name, type=typ, size=size, local_path=child))
+    return items
+
+
+def filename_version(name: str) -> str | None:
+    m = VERSION_RE.search(name)
+    return f"v{m.group(1)}" if m else None
+
+
+def base_name(name: str) -> str:
+    return VERSION_RE.sub("", name)
+
+
+def has_bad_hyphen(name: str) -> bool:
+    # Hyphenated dates like 2026-05-20 are allowed; other hyphens are flagged.
+    stripped = re.sub(r"\d{4}-\d{2}-\d{2}", "", name)
+    return "-" in stripped
+
+
+def check_naming(items: Iterable[Item]) -> int:
+    issues = 0
+    print("--- Check 1: Naming / version basics ---")
+    for item in items:
+        if item.type != "file":
+            continue
+        name = item.name
+        if " " in name:
+            print(f"  ⚠️  Space in filename: {name}")
+            issues += 1
+        if has_bad_hyphen(name):
+            print(f"  ⚠️  Hyphen in filename: {name}")
+            issues += 1
+        if VAGUE_RE.search(name):
+            print(f"  ⚠️  Vague filename term: {name}")
+            issues += 1
+        if name not in VERSIONLESS_ALLOWED and not filename_version(name):
+            print(f"  ⚠️  No version number in filename: {name}")
+            issues += 1
+    if issues == 0:
+        print("  ✅ No naming/version basics issues found")
+    return issues
+
+
+def check_multiple_versions(items: Iterable[Item]) -> int:
+    print("\n--- Check 2: Multiple active versions ---")
+    groups: dict[str, list[str]] = {}
+    for item in items:
+        if item.type != "file":
+            continue
+        if not filename_version(item.name):
+            continue
+        groups.setdefault(base_name(item.name), []).append(item.name)
+
+    issues = 0
+    for base, names in sorted(groups.items()):
+        if len(names) > 1:
+            print(f"  ⚠️  Multiple active versions of '{base}':")
+            for name in sorted(names):
+                print(f"     {name}")
+            issues += 1
+    if issues == 0:
+        print("  ✅ No multiple active versions found")
+    return issues
+
+
+def read_local_text(path: Path) -> str | None:
+    try:
+        return path.read_text(encoding="utf-8", errors="ignore")
+    except Exception:
+        return None
+
+
+def download_drive_text(item: Item, tmpdir: Path) -> str | None:
+    ext = Path(item.name).suffix.lower()
+    if ext not in TEXT_EXTS:
+        return None
+    out = tmpdir / item.name
+    proc = run(["gog", "drive", "download", item.id, "--output", str(out)])
+    if proc.returncode != 0 or not out.exists():
+        return None
+    return read_local_text(out)
+
+
+def body_version(text: str) -> str | None:
+    m = BODY_VERSION_RE.search(text)
+    return f"v{m.group(1)}" if m else None
+
+
+def check_body(items: Iterable[Item], is_drive: bool, tmpdir: Path) -> int:
+    print("\n--- Check 3: Body version + placeholders ---")
+    issues = 0
+    checked = 0
+    for item in items:
+        if item.type != "file":
+            continue
+        ext = Path(item.name).suffix.lower()
+        if ext not in TEXT_EXTS:
+            continue
+
+        text = download_drive_text(item, tmpdir) if is_drive else read_local_text(item.local_path or Path(item.id))
+        if text is None:
+            continue
+        checked += 1
+
+        fver = filename_version(item.name)
+        bver = body_version(text)
+        if fver and bver and fver.lower() != bver.lower():
+            print(f"  ⚠️  Version mismatch: {item.name} filename={fver}, body={bver}")
+            issues += 1
+        if fver and not bver and ext in {".md", ".txt", ".html", ".htm"}:
+            print(f"  ⚠️  Filename has {fver} but body version not found: {item.name}")
+            issues += 1
+        if PLACEHOLDER_RE.search(text):
+            print(f"  ⚠️  Placeholder present: {item.name}")
+            issues += 1
+
+    if checked == 0:
+        print("  ℹ️  No text-like files checked")
+    elif issues == 0:
+        print(f"  ✅ Checked {checked} text-like file(s); no body issues found")
+    return issues
+
+
+def main() -> int:
+    if len(sys.argv) != 2:
+        usage()
+        return 0 if len(sys.argv) == 1 else 2
+
+    target = sys.argv[1]
+    drive = is_drive_id(target)
+    print(f"=== ssot-audit {SCRIPT_VERSION} ===")
+    print(f"Target: {target}")
+    print(f"Mode: {'Google Drive' if drive else 'local directory'}")
+    print("")
+
+    try:
+        items = list_drive(target) if drive else list_local(Path(target))
+    except Exception as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 2
+
+    issues = 0
+    issues += check_naming(items)
+    issues += check_multiple_versions(items)
+    with tempfile.TemporaryDirectory() as td:
+        issues += check_body(items, drive, Path(td))
+
+    total = len(items)
+    files = sum(1 for i in items if i.type == "file")
+    folders = sum(1 for i in items if i.type == "folder")
+    print("\n--- Statistics ---")
+    print(f"  Items scanned: {total}")
+    print(f"  Files: {files}")
+    print(f"  Folders: {folders}")
+
+    print("")
+    if issues == 0:
+        print("✅ No issues found. SSOT is clean.")
+    else:
+        print(f"🔴 {issues} issue(s) found. Fix before uploading new files.")
+    return min(issues, 125)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

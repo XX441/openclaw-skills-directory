@@ -1,0 +1,19 @@
+{
+  "name": "IGSO",
+  "primary": "#273F20",
+  "accent": "#C8A852",
+  "text_dark": "#333333",
+  "text_light": "#FFFFFF",
+  "bg_light": "#F5F5F0",
+  "bg_dark": "#273F20",
+  "font_cn": "Microsoft JhengHei",
+  "font_en": "Arial",
+  "footer_line1": "Confidential & Proprietary | © 2026 International Growers Standards Organization (IGSO). All Rights Reserved.",
+  "footer_line2": "机密及专有信息 | © 2026 国际农民标准组织（IGSO）。保留所有权利。",
+  "dimensions": "1792x1024",
+  "aspect": "16:9",
+  "bullet_char": "◆",
+  "checkmark": "✓",
+  "logo_position": "top-left",
+  "description": "IGSO dark green + gold professional. Use for standards, certification, institutional presentations."
+}

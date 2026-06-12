@@ -1,0 +1,491 @@
+[
+  {
+    "folder": "agent-team-framework",
+    "name": "agent-team-framework",
+    "icon": "🤖",
+    "category": "System",
+    "description": "Reusable framework for managing multi-agent coding teams with clear roles, shared knowledge, quality gates, deployment flow, and governance.",
+    "when": "Use when setting up or auditing a project that needs coordinated AI coding agents.",
+    "files": [
+      "SKILL.md",
+      "references/framework-full.md"
+    ]
+  },
+  {
+    "folder": "ai-ppt-generator",
+    "name": "ai-ppt-generator",
+    "icon": "📊",
+    "category": "Design",
+    "description": "Generate branded presentation decks from structured prompts, brand assets, and slide assembly scripts.",
+    "when": "Use when creating a new deck with a repeatable brand-driven slide workflow.",
+    "files": [
+      "SKILL.md",
+      "assembly.py",
+      "brands/awwws/background.png",
+      "brands/awwws/config.json",
+      "brands/bd/background.png",
+      "brands/bd/config.json",
+      "brands/frutodor/background.png",
+      "brands/frutodor/config.json",
+      "brands/frutus/background.png",
+      "brands/frutus/config.json",
+      "brands/igso/background.png",
+      "brands/igso/config.json",
+      "slide-prompts.md"
+    ]
+  },
+  {
+    "folder": "canva-connect",
+    "name": "canva",
+    "icon": "🎨",
+    "category": "Design",
+    "description": "Manage Canva designs, assets, exports, and folders through the Canva Connect API.",
+    "when": "Use when automating Canva asset management, export, or design organization.",
+    "files": [
+      "SKILL.md",
+      "references/api.md",
+      "scripts/canva.sh"
+    ]
+  },
+  {
+    "folder": "caveman",
+    "name": "caveman",
+    "icon": "🪨",
+    "category": "Communication",
+    "description": "Simplify complex concepts into clear, accessible explanations for non-technical audiences.",
+    "when": "Use for ELI5-style explanations, simplification, or audience-friendly rewrites.",
+    "files": [
+      "SKILL.md"
+    ]
+  },
+  {
+    "folder": "coding-discipline",
+    "name": "coding-discipline",
+    "icon": "🧑‍💻",
+    "category": "Coding",
+    "description": "Applies disciplined coding rules before, during, and after code changes: think first, keep changes surgical, verify before done.",
+    "when": "Use before any code change, refactor, feature, deploy, or bug fix.",
+    "files": [
+      "SKILL.md"
+    ]
+  },
+  {
+    "folder": "content-strategy",
+    "name": "content-strategy",
+    "icon": "📝",
+    "category": "Business",
+    "description": "Build content strategy, pillars, calendars, distribution plans, repurposing workflows, and performance metrics.",
+    "when": "Use when planning what content to create, where to distribute it, and how to measure it.",
+    "files": [
+      "SKILL.md"
+    ]
+  },
+  {
+    "folder": "council-plus",
+    "name": "council-plus",
+    "icon": "🧠",
+    "category": "Strategy",
+    "description": "Runs a full Guru Council workflow from framing to council synthesis, stress-testing, PRD, issues, and handoff.",
+    "when": "Use when a topic deserves complete strategic review and execution packaging.",
+    "files": [
+      "SKILL.md"
+    ]
+  },
+  {
+    "folder": "diagnose",
+    "name": "diagnose",
+    "icon": "🩺",
+    "category": "System",
+    "description": "Structured troubleshooting process for identifying root causes behind errors, failures, or unexpected behavior.",
+    "when": "Use when something is broken, unclear, failing, or needs systematic debugging.",
+    "files": [
+      "SKILL.md"
+    ]
+  },
+  {
+    "folder": "frontend-performance",
+    "name": "frontend-performance",
+    "icon": "⚡",
+    "category": "Coding",
+    "description": "Analyze and improve frontend performance across Core Web Vitals, loading, bundle size, stability, and runtime efficiency.",
+    "when": "Use when pages feel slow, bundles are heavy, or Core Web Vitals need improvement.",
+    "files": [
+      "README.md",
+      "SKILL.md",
+      "clawhub.json"
+    ]
+  },
+  {
+    "folder": "grill-me",
+    "name": "grill-me",
+    "icon": "🔥",
+    "category": "Strategy",
+    "description": "Relentlessly interviews and stress-tests plans, strategies, or designs until assumptions and dependencies are clear.",
+    "when": "Use when you want a plan challenged, interrogated, or pressure-tested.",
+    "files": [
+      "SKILL.md"
+    ]
+  },
+  {
+    "folder": "grill-with-docs",
+    "name": "grill-with-docs",
+    "icon": "📚",
+    "category": "Strategy",
+    "description": "Stress-tests plans or interface designs against domain documentation and updates docs inline.",
+    "when": "Use when specs, terminology, or architecture must stay aligned with a domain model.",
+    "files": [
+      "SKILL.md"
+    ]
+  },
+  {
+    "folder": "handoff",
+    "name": "handoff",
+    "icon": "🤝",
+    "category": "Workflow",
+    "description": "Compacts current work into a clear handoff document for another agent or future session.",
+    "when": "Use when work needs to continue elsewhere without losing context.",
+    "files": [
+      "SKILL.md"
+    ]
+  },
+  {
+    "folder": "improve-codebase-architecture",
+    "name": "improve-codebase-architecture",
+    "icon": "🏗️",
+    "category": "Coding",
+    "description": "Finds architecture deepening opportunities: shallow modules, tight coupling, untestable code, and AI-navigation issues.",
+    "when": "Use when auditing or planning refactors for maintainability and testability.",
+    "files": [
+      "SKILL.md"
+    ]
+  },
+  {
+    "folder": "keyword-research",
+    "name": "keyword-research",
+    "icon": "🔎",
+    "category": "Marketing",
+    "description": "SEO keyword research and topic discovery with intent classification, clustering, prioritization, and report templates.",
+    "when": "Use when planning search-led content, topic clusters, or keyword strategy.",
+    "files": [
+      "SKILL.md",
+      "references/example-report.md",
+      "references/keyword-intent-taxonomy.md",
+      "references/keyword-prioritization-framework.md",
+      "references/topic-cluster-templates.md"
+    ]
+  },
+  {
+    "folder": "linkedin-cli",
+    "name": "linkedin-cli",
+    "icon": "💼",
+    "category": "Business",
+    "description": "CLI utilities for LinkedIn profile search, feed summaries, message checks, and session-based workflows.",
+    "when": "Use when automating LinkedIn scouting or lightweight relationship intelligence.",
+    "files": [
+      "SKILL.md",
+      "scripts/lk.py"
+    ]
+  },
+  {
+    "folder": "mattpocock-skills",
+    "name": "mattpocock-skills",
+    "icon": "🛠️",
+    "category": "Workflow",
+    "description": "Collection index of reusable engineering and thinking skills adapted from Matt Pocock-style agent workflows.",
+    "when": "Use as a gateway/reference for related skills such as TDD, handoff, PRD, triage, and grilling.",
+    "files": [
+      "SKILL.md"
+    ]
+  },
+  {
+    "folder": "ontology",
+    "name": "ontology",
+    "icon": "🕸️",
+    "category": "System",
+    "description": "Typed knowledge graph pattern for structured memory, entities, relationships, constraints, and cross-skill state.",
+    "when": "Use when information needs to be linked, queried, validated, or shared across skills.",
+    "files": [
+      "SKILL.md",
+      "references/queries.md",
+      "references/schema.md",
+      "scripts/ontology.py"
+    ]
+  },
+  {
+    "folder": "prototype",
+    "name": "prototype",
+    "icon": "🧪",
+    "category": "Design",
+    "description": "Build throwaway prototypes to explore interfaces, APIs, state models, or product ideas before committing to production code.",
+    "when": "Use when testing possible approaches quickly and cheaply.",
+    "files": [
+      "SKILL.md"
+    ]
+  },
+  {
+    "folder": "react-expert",
+    "name": "react-expert",
+    "icon": "⚛️",
+    "category": "Coding",
+    "description": "React 18+ / 19 guidance for component architecture, hooks, state, Server Components, Suspense, performance, and testing.",
+    "when": "Use when building or reviewing modern React applications.",
+    "files": [
+      "SKILL.md",
+      "references/hooks-patterns.md",
+      "references/migration-class-to-modern.md",
+      "references/performance.md",
+      "references/react-19-features.md",
+      "references/server-components.md",
+      "references/state-management.md",
+      "references/testing-react.md"
+    ]
+  },
+  {
+    "folder": "self-improving-agent",
+    "name": "self-improvement",
+    "icon": "🌱",
+    "category": "System",
+    "description": "Captures mistakes, corrections, failures, feature requests, and reusable lessons for continuous agent improvement.",
+    "when": "Use after failures, user corrections, tool/API issues, or recurring workflow discoveries.",
+    "files": [
+      "SKILL.md",
+      "assets/ERRORS.md",
+      "assets/FEATURE_REQUESTS.md",
+      "assets/LEARNINGS.md",
+      "assets/SKILL-TEMPLATE.md",
+      "hooks/openclaw/HOOK.md",
+      "hooks/openclaw/handler.js",
+      "hooks/openclaw/handler.ts",
+      "references/examples.md",
+      "references/hooks-setup.md",
+      "references/openclaw-integration.md",
+      "scripts/activator.sh",
+      "scripts/error-detector.sh",
+      "scripts/extract-skill.sh"
+    ]
+  },
+  {
+    "folder": "ssot-knowledge-graph",
+    "name": "ssot-knowledge-graph",
+    "icon": "🧭",
+    "category": "Knowledge",
+    "description": "Connects SSOT files to projects, trackers, status docs, content indexes, and memory pointers.",
+    "when": "Use when new knowledge needs to be classified, cross-referenced, and connected.",
+    "files": [
+      "SKILL.md",
+      "references/connection-layer.md"
+    ]
+  },
+  {
+    "folder": "ssot-setting",
+    "name": "ssot-setting",
+    "icon": "⚙️",
+    "category": "System",
+    "description": "Snapshots, backs up, and restores OpenClaw configuration as an SSOT-controlled workflow.",
+    "when": "Use before/after config changes or when restoring a known-good configuration state.",
+    "files": [
+      "SKILL.md",
+      "scripts/ssot-restore.sh",
+      "scripts/ssot-setting.sh"
+    ]
+  },
+  {
+    "folder": "ssot-steward",
+    "name": "ssot-steward",
+    "icon": "🗂️",
+    "category": "Knowledge",
+    "description": "Enforces SSOT file naming, versioning, archive, upload, and branded-PDF workflow rules.",
+    "when": "Use for Google Drive / Good Steward file operations, version bumps, uploads, and PDF generation.",
+    "files": [
+      "SKILL.md",
+      "references/pdfgen-workflow.md",
+      "references/policy.md",
+      "references/pre-share-checklist.md",
+      "references/version-rules.md",
+      "scripts/ssot-audit",
+      "scripts/ssot-convert",
+      "scripts/ssot-upload"
+    ]
+  },
+  {
+    "folder": "stock-images",
+    "name": "Stock Images",
+    "icon": "🖼️",
+    "category": "Design",
+    "description": "Finds free stock photos and placeholder image sources using direct URL patterns and provider guidance.",
+    "when": "Use when sourcing visual placeholders or royalty-free stock imagery.",
+    "files": [
+      "SKILL.md",
+      "memory-template.md",
+      "providers.md",
+      "setup.md",
+      "unsplash-categories.md"
+    ]
+  },
+  {
+    "folder": "tdd",
+    "name": "tdd",
+    "icon": "✅",
+    "category": "Coding",
+    "description": "Test-driven development workflow using red-green-refactor and behavior-first implementation.",
+    "when": "Use when building features or fixing bugs test-first.",
+    "files": [
+      "SKILL.md"
+    ]
+  },
+  {
+    "folder": "to-issues",
+    "name": "to-issues",
+    "icon": "🎫",
+    "category": "Product",
+    "description": "Turns plans, PRDs, or conversations into prioritized, independently completable issue tickets.",
+    "when": "Use when a strategy or spec needs actionable implementation tasks.",
+    "files": [
+      "SKILL.md"
+    ]
+  },
+  {
+    "folder": "to-prd",
+    "name": "to-prd",
+    "icon": "📄",
+    "category": "Product",
+    "description": "Synthesizes conversation context into a structured Product Requirements Document.",
+    "when": "Use when requirements need to be documented as a PRD/spec.",
+    "files": [
+      "SKILL.md"
+    ]
+  },
+  {
+    "folder": "triage",
+    "name": "triage",
+    "icon": "🚦",
+    "category": "Workflow",
+    "description": "Sorts incoming messages, files, emails, or ideas into prioritized action buckets.",
+    "when": "Use when processing a batch of inputs or deciding what matters first.",
+    "files": [
+      "SKILL.md"
+    ]
+  },
+  {
+    "folder": "ui-audit",
+    "name": "ui-audit",
+    "icon": "🔍",
+    "category": "Design",
+    "description": "Audits UI against UX principles: hierarchy, accessibility, cognition, navigation, feedback, and usability patterns.",
+    "when": "Use when reviewing an interface or design for UX quality.",
+    "files": [
+      "CLAUDE.md",
+      "README.md",
+      "SKILL.md",
+      "package.json",
+      "references/00-core-framework.md",
+      "references/01-anchors.md",
+      "references/02-information-scaffold.md",
+      "references/10-checklist-new-interfaces.md",
+      "references/11-checklist-fidelity.md",
+      "references/12-checklist-visual-style.md",
+      "references/13-checklist-innovation.md",
+      "references/20-patterns-chunking.md",
+      "references/21-patterns-progressive-disclosure.md",
+      "references/22-patterns-cognitive-load.md",
+      "references/23-patterns-visual-hierarchy.md",
+      "references/24-patterns-social-proof.md",
+      "references/25-patterns-feedback.md",
+      "references/26-patterns-error-handling.md",
+      "references/27-patterns-accessibility.md",
+      "references/28-patterns-personalization.md",
+      "references/29-patterns-onboarding.md",
+      "references/30-patterns-information.md",
+      "references/31-patterns-navigation.md"
+    ]
+  },
+  {
+    "folder": "ui-ux",
+    "name": "ui-ux-pro-max",
+    "icon": "✨",
+    "category": "Design",
+    "description": "Searchable UI/UX design databases and scripts for styles, palettes, typography, charts, stacks, and design systems.",
+    "when": "Use when generating design direction or choosing UI patterns from structured references.",
+    "files": [
+      "README.md",
+      "SKILL.md",
+      "data/charts.csv",
+      "data/colors.csv",
+      "data/icons.csv",
+      "data/landing.csv",
+      "data/products.csv",
+      "data/react-performance.csv",
+      "data/stacks/astro.csv",
+      "data/stacks/flutter.csv",
+      "data/stacks/html-tailwind.csv",
+      "data/stacks/jetpack-compose.csv",
+      "data/stacks/nextjs.csv",
+      "data/stacks/nuxt-ui.csv",
+      "data/stacks/nuxtjs.csv",
+      "data/stacks/react-native.csv",
+      "data/stacks/react.csv",
+      "data/stacks/shadcn.csv",
+      "data/stacks/svelte.csv",
+      "data/stacks/swiftui.csv",
+      "data/stacks/vue.csv",
+      "data/styles.csv",
+      "data/typography.csv",
+      "data/ui-reasoning.csv",
+      "data/ux-guidelines.csv",
+      "data/web-interface.csv",
+      "scripts/core.py",
+      "scripts/design_system.py",
+      "scripts/search.py",
+      "skill-card.md",
+      "templates/base/quick-reference.md",
+      "templates/base/skill-content.md",
+      "templates/platforms/agent.json",
+      "templates/platforms/claude.json",
+      "templates/platforms/codebuddy.json",
+      "templates/platforms/codex.json",
+      "templates/platforms/continue.json",
+      "templates/platforms/copilot.json",
+      "templates/platforms/cursor.json",
+      "templates/platforms/gemini.json",
+      "templates/platforms/kiro.json",
+      "templates/platforms/opencode.json",
+      "templates/platforms/qoder.json",
+      "templates/platforms/roocode.json",
+      "templates/platforms/trae.json",
+      "templates/platforms/windsurf.json"
+    ]
+  },
+  {
+    "folder": "weather",
+    "name": "weather",
+    "icon": "🌦️",
+    "category": "Utility",
+    "description": "Gets current weather and forecasts from no-key public weather providers.",
+    "when": "Use when a task needs quick weather context.",
+    "files": [
+      "SKILL.md"
+    ]
+  },
+  {
+    "folder": "website-seo",
+    "name": "website-seo",
+    "icon": "📈",
+    "category": "Marketing",
+    "description": "Universal on-page SEO system covering page optimization, schema, technical checks, internal links, Core Web Vitals, and gaps.",
+    "when": "Use when optimizing websites, pages, or content for search visibility.",
+    "files": [
+      "SKILL.md"
+    ]
+  },
+  {
+    "folder": "zoom-out",
+    "name": "zoom-out",
+    "icon": "🔭",
+    "category": "Strategy",
+    "description": "Steps back from details to identify larger patterns, strategic connections, assumptions, and implications.",
+    "when": "Use when you need big-picture perspective or “what am I missing?” analysis.",
+    "files": [
+      "SKILL.md"
+    ]
+  }
+]

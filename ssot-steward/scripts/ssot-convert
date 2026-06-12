@@ -1,0 +1,142 @@
+#!/usr/bin/env bash
+# ssot-convert v1.0.0 — Simplified ↔ Traditional Chinese conversion with auto-version bump
+# Usage: ssot-convert <file.md> --to <tc|sc> [--bump minor]
+#
+# Uses OpenCC for conversion:
+#   s2hk.json  — Simplified → Hong Kong Traditional (--to tc)
+#   hk2s.json  — Hong Kong Traditional → Simplified (--to sc)
+#
+# After converting, bumps the MINOR version and adds language suffix.
+
+set -euo pipefail
+
+SCRIPT_VERSION="v1.0.0"
+
+usage() {
+  cat <<EOF
+ssot-convert ${SCRIPT_VERSION} — Chinese script conversion for Good Steward Legacy SSOT
+
+Usage:
+  ssot-convert <file.md> --to <tc|sc> [--bump minor|patch]
+
+Arguments:
+  <file.md>        Source markdown file (must contain a version number)
+  --to <tc|sc>     tc = Simplified → Traditional (HK) ; sc = Traditional (HK) → Simplified
+  --bump minor     Bump MINOR version after conversion (default: minor)
+  --bump patch     Bump PATCH version instead
+
+Examples:
+  ssot-convert May14_Agenda_v8.1.md --to sc
+  # → May14_Agenda_v8.2_SC.md (TC→SC, minor bump)
+
+  ssot-convert IGSO_Brief_v2.0.md --to tc --bump patch
+  # → IGSO_Brief_v2.0.1_TC.md (SC→TC, patch bump)
+EOF
+  exit 1
+}
+
+[ $# -eq 0 ] && usage
+
+MD_FILE=""
+TARGET=""
+BUMP_KIND="minor"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --to) TARGET="$2"; shift 2 ;;
+    --bump) BUMP_KIND="$2"; shift 2 ;;
+    -h|--help) usage ;;
+    *) 
+      if [ -z "$MD_FILE" ] && [ -f "$1" ]; then
+        MD_FILE="$1"; shift
+      else
+        echo "Error: unknown argument or file not found: $1" >&2
+        exit 1
+      fi
+      ;;
+  esac
+done
+
+[ -z "$MD_FILE" ] && { echo "Error: no markdown file specified" >&2; exit 1; }
+[ -z "$TARGET" ] && { echo "Error: --to <tc|sc> required" >&2; exit 1; }
+
+# Validate file
+if ! grep -qi 'v[0-9]\.[0-9]' "$MD_FILE"; then
+  echo "Error: file does not contain a version number (vX.Y)" >&2
+  exit 1
+fi
+
+# Determine OpenCC config
+case "$TARGET" in
+  tc) CONFIG="s2hk.json"; SUFFIX="TC" ;;
+  sc) CONFIG="hk2s.json"; SUFFIX="SC" ;;
+  *) echo "Error: --to must be tc or sc" >&2; exit 1 ;;
+esac
+
+which opencc >/dev/null 2>&1 || { echo "Error: opencc not installed" >&2; exit 1; }
+
+# Extract version from filename
+BASENAME=$(basename "$MD_FILE" .md)
+DIRNAME=$(dirname "$MD_FILE")
+
+# Try to extract version like v8.1 or v2.0.1 from filename
+if [[ "$BASENAME" =~ _v([0-9]+)\.([0-9]+)(\.([0-9]+))? ]]; then
+  MAJOR="${BASH_REMATCH[1]}"
+  MINOR="${BASH_REMATCH[2]}"
+  PATCH="${BASH_REMATCH[4]:-0}"
+  CURRENT_VERSION="v${MAJOR}.${MINOR}${PATCH:+.$PATCH}"
+else
+  echo "Error: cannot detect version number in filename" >&2
+  echo "  Expected pattern: Document_Title_vX.Y(.Z).md" >&2
+  exit 1
+fi
+
+# Bump version
+if [ "$BUMP_KIND" = "major" ]; then
+  NEW_MAJOR=$((MAJOR + 1))
+  NEW_VERSION="v${NEW_MAJOR}.0.0"
+elif [ "$BUMP_KIND" = "minor" ]; then
+  NEW_MINOR=$((MINOR + 1))
+  NEW_VERSION="v${MAJOR}.${NEW_MINOR}"
+  [ "$PATCH" -gt 0 ] && NEW_VERSION="${NEW_VERSION}.0"
+elif [ "$BUMP_KIND" = "patch" ]; then
+  NEW_PATCH=$((PATCH + 1))
+  if [ "$PATCH" -eq 0 ]; then
+    NEW_VERSION="v${MAJOR}.${MINOR}.${NEW_PATCH}"
+  else
+    NEW_VERSION="v${MAJOR}.${MINOR}.${NEW_PATCH}"
+  fi
+else
+  echo "Error: --bump must be major, minor, or patch" >&2
+  exit 1
+fi
+
+# Build new filename
+CORE_NAME=$(echo "$BASENAME" | sed -E 's/_v[0-9]+(\.[0-9]+)+(_[A-Z]+)?$//')
+NEW_FILENAME="${CORE_NAME}_${NEW_VERSION}_${SUFFIX}.md"
+OUTPUT_FILE="${DIRNAME}/${NEW_FILENAME}"
+
+echo "=== ssot-convert ==="
+echo "Source:   ${BASENAME}.md (${CURRENT_VERSION})"
+echo "Config:   ${CONFIG} → ${SUFFIX}"
+echo "Bump:     ${BUMP_KIND} → ${NEW_VERSION}"
+echo "Output:   ${NEW_FILENAME}"
+
+# Convert content
+opencc -c "$CONFIG" -i "$MD_FILE" -o "$OUTPUT_FILE"
+
+# Update version metadata in converted file
+if grep -qi 'v[0-9]' "$OUTPUT_FILE" 2>/dev/null; then
+  # Replace old version mentions with new version (body, not filename)
+  sed -i '' "s/${CURRENT_VERSION}/${NEW_VERSION}/g" "$OUTPUT_FILE"
+  # Update Last Updated date
+  TODAY=$(date +%Y-%m-%d)
+  sed -i '' "s/Last Updated: [0-9-]\{10\}/Last Updated: ${TODAY}/" "$OUTPUT_FILE" 2>/dev/null || true
+fi
+
+echo "Done → ${OUTPUT_FILE}"
+echo ""
+echo "Remember:"
+echo "  1. Verify the converted content"
+echo "  2. Use ssot-upload to upload the new file"
+EOF
